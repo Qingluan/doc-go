@@ -2,7 +2,6 @@ package docparse
 
 import (
 	"bytes"
-	"io"
 	"unicode/utf16"
 )
 
@@ -261,32 +260,4 @@ func UTF16Decode(data []byte) string {
 		runes[i] = uint16(data[2*i]) + uint16(data[2*i+1])<<8
 	}
 	return string(utf16.Decode(runes))
-}
-
-func GetPlainText(reader io.ReadSeeker, code uint16) (paragraphs []string) {
-	roff := 0x001c
-	reader.Seek(int64(roff), 0)
-	sizeBuf := make([]byte, 2)
-	reader.Read(sizeBuf)
-	size := I16(sizeBuf)
-	reader.Seek(2048, 0)
-	buf := make([]byte, size)
-	// fmt.Println("size:", size-2048)
-	n, _ := reader.Read(buf)
-	fs := bytes.Split(buf[:n], []byte("\r"))
-	if len(fs) > 1 {
-		fs = fs[:len(fs)-1]
-	}
-	switch code {
-	case PAGECODE_UTF16LE:
-
-		for _, f := range fs {
-			paragraphs = append(paragraphs, UTF16Decode(f))
-		}
-	case PAGECODE_UTF8:
-		for _, f := range fs {
-			paragraphs = append(paragraphs, string(f))
-		}
-	}
-	return
 }
