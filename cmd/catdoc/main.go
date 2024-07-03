@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"testdoc/docparse"
+
+	"github.com/Qingluan/doc-go/docparse"
 )
 
 func main() {
