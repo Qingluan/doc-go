@@ -7,8 +7,9 @@ a pure go to read  doc(97 ) / docx (2007)
 
 - [x] read text in docx
 - [x] read text in doc
-- [x] read table within docx
-- [x] read table within doc
+- [x] *read table within docx*
+- [x] *read table within doc*
+- [x] *markdown to docx*  
 - [ ] read image within docx
 - [ ] read image within doc
 
@@ -28,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/Qingluan/doc-go/docparse"
+	"github.com/Qingluan/doc-go/docxgen"
 	"github.com/Qingluan/doc-go/docxparse"
 )
 
@@ -45,6 +47,11 @@ func main() {
 		for _, p := range res {
 			fmt.Println(p)
 		}
+	} else if strings.HasSuffix(f, ".md") {
+		create := docxgen.NewDocCreator()
+		content, _ := os.ReadFile(f)
+		create.FromMarkdown(string(content)).ExportDocx("out.docx")
+		fmt.Println("docx文件已生成:", "out.docx")
 	}
 
 }

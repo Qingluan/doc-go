@@ -7,15 +7,14 @@ import (
 
 var (
 	SEP_XML    = `<p w:rsidR="002423EF" w:rsidRDefault="002423EF"><pPr><spacing w:line="560" w:lineRule="exact" /><rPr><rFonts w:ascii="Times New Roman" w:eastAsia="方正仿宋简体" w:hAnsi="Times New Roman" /><sz w:val="32" /><szCs w:val="32" /></rPr></pPr></p>`
-	R_XML_TEMP = `<r>
+	R_XML_TEMP = `
+	<r>
 		<rPr>
 			<rFonts w:ascii="{ASCII}" w:eastAsia="{EASTASIA}" w:hAnsi="{HANSI}" w:hint="eastAsia" />
 			<sz w:val="{SIZE}" />
 			<szCs w:val="{SIZE}"/>
 		</rPr>
-		<t>
-			{TEXT}
-		</t>
+		<t>{TEXT}</t>
 	</r>`
 	PRP_TITLE = `<pPr>
 	<spacing w:line="560" w:lineRule="exact" />
@@ -107,9 +106,9 @@ func (p *DocxParagraph) Xml() string {
 		</r>
 	*/
 	text := strings.TrimSpace(p.Text)
-	if text == "" {
-		return ""
-	}
+	// if text == "" {
+	// 	return ""
+	// }
 	root := `<p w:rsidR="002423EF" w:rsidRDefault="0015648D">`
 	switch p.Type {
 	case TYPE_TITLE:
@@ -124,10 +123,27 @@ func (p *DocxParagraph) Xml() string {
 		root += PRP_NORM
 	}
 
-	// startString := text[:1]
-	// leftString := text[1:]
-	root += Wrap(text, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
-	root += "</p>"
+	if p.Type == TYPE_H1 {
+		// startString := text[:3]
+		// leftString := text[3 : len(text)-3]
+		// endString := text[len(text)-3:]
+		// root += Wrap(startString, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
+		root += `<proofErr w:type="gramStart" />`
+		root += Wrap(text, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
+		// root += Wrap(leftString, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
+		// root += Wrap(endString, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
+		root += `<proofErr w:type="gramEnd" />`
+		root += "</p>"
+		// fmt.Println(startString)
+		// fmt.Println(leftString)
+		// fmt.Println(endString)
+	} else {
+		root += Wrap(text, p.Font.Ascii, p.Font.EastAsia, p.Font.HAnsi, fmt.Sprint(p.Size))
+		root += "</p>"
+
+	}
+
+	// fmt.Println(text)
 	return root
 }
 
@@ -151,4 +167,34 @@ func (c *DocxCreator) Xml() string {
 	root += END_XML
 	root += "</body></document>"
 	return root
+}
+
+func (dc *DocxCreator) FromMarkdown(markdown string) *DocxCreator {
+	lines := strings.Split(markdown, "\n")
+	dc.Paragraphs = []*DocxParagraph{}
+	for _, line := range lines {
+		if strings.HasPrefix(line, "### ") {
+			// fmt.Println("\t\tadd h3")
+			dc.AddParagraph(line[4:])
+			dc.LastPragraph().AsH2()
+		} else if strings.HasPrefix(line, "## ") {
+			// fmt.Println("\tadd h2")
+			// dc.AddSepParagraph()
+			// dc.AddParagraph("")
+			dc.AddParagraph(line[3:])
+			dc.LastPragraph().AsH1()
+		} else if strings.HasPrefix(line, "# ") {
+			// fmt.Println("add h1")
+			dc.AddParagraph(line[2:])
+			dc.LastPragraph().AsTitle()
+			dc.AddSepParagraph()
+		} else if line == "" {
+			dc.AddSepParagraph()
+			// fmt.Println("---- add sep")
+		} else {
+			// fmt.Println("\t\t\tadd normal")
+			dc.AddParagraph(line)
+		}
+	}
+	return dc
 }

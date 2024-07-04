@@ -2,6 +2,7 @@ package docxgen
 
 import (
 	"archive/zip"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,6 +114,10 @@ type DocxCreator struct {
 }
 
 func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
+	st, err := os.Stat(docxfilepath)
+	if err == nil && !st.IsDir() {
+		os.Remove(docxfilepath)
+	}
 	tmpDir := os.TempDir()
 	base := time.Now().String()
 	baseDir := filepath.Join(tmpDir, base)
@@ -127,15 +132,17 @@ func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
 	word_theme := filepath.Join(wordDir, "theme")
 	os.Mkdir(word_theme, os.ModePerm)
 
-	docProps := filepath.Join(wordDir, "docProps")
+	docProps := filepath.Join(baseDir, "docProps")
 	os.Mkdir(docProps, os.ModePerm)
-	customXml := filepath.Join(docProps, "customXml")
+	customXml := filepath.Join(baseDir, "customXml")
 	os.Mkdir(customXml, os.ModePerm)
+	_rels := filepath.Join(baseDir, "_rels")
+	os.Mkdir(_rels, os.ModePerm)
 	customXml_rels := filepath.Join(customXml, "_rels")
 	os.Mkdir(customXml_rels, os.ModePerm)
 
-	customXml_rels_rels := filepath.Join(customXml_rels, ".rels")
-	os.WriteFile(customXml_rels_rels, []byte(_rels_rels_content), os.ModePerm)
+	_rels_rels := filepath.Join(_rels, ".rels")
+	os.WriteFile(_rels_rels, []byte(_rels_rels_content), os.ModePerm)
 	customXml_rels_item1 := filepath.Join(customXml_rels, "item1.xml.rels")
 	os.WriteFile(customXml_rels_item1, []byte(_rels_item1_content), os.ModePerm)
 	customXml_item1 := filepath.Join(customXml, "item1.xml")
@@ -203,7 +210,31 @@ func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
 		customXml_itemProps1,
 		customXml_item1,
 		customXml_rels_item1,
+		_rels_rels,
 	}
+	for _, file := range files {
+
+		f, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		// 创建zip文件中的文件
+		zname := strings.ReplaceAll(file, baseDir, "")
+		zname = strings.TrimPrefix(zname, "/")
+		w, err := zipWriter.Create(zname)
+		if err != nil {
+			return err
+		}
+		// 将文件内容写入zip文件
+		_, err = io.Copy(w, f)
+		if err != nil {
+			return err
+		}
+	}
+	os.Rename(docxfilepathZip, docxfilepath)
+
+	return nil
 
 }
 
@@ -219,29 +250,6 @@ func (dc *DocxCreator) AddSepParagraph() {
 	p := NewDocPragraph("")
 	p.Type = TYPE_SEP
 	dc.Paragraphs = append(dc.Paragraphs, p)
-}
-
-func (dc *DocxCreator) FromMarkdown(markdown string) *DocxCreator {
-	lines := strings.Split(markdown, "\n")
-	dc.Paragraphs = []*DocxParagraph{}
-	for _, line := range lines {
-		if strings.HasPrefix(line, "### ") {
-			dc.AddParagraph(line[4:])
-			dc.LastPragraph().AsH2()
-		} else if strings.HasPrefix(line, "## ") {
-
-			dc.AddParagraph(line[3:])
-			dc.LastPragraph().AsH1()
-		} else if strings.HasPrefix(line, "# ") {
-
-			dc.AddParagraph(line[2:])
-			dc.LastPragraph().AsTitle()
-			dc.AddSepParagraph()
-		} else if line == "" {
-			dc.AddSepParagraph()
-		}
-	}
-	return dc
 }
 
 func NewDocCreator() *DocxCreator {

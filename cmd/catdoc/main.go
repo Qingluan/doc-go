@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Qingluan/doc-go/docparse"
+	"github.com/Qingluan/doc-go/docxgen"
 	"github.com/Qingluan/doc-go/docxparse"
 )
 
@@ -23,6 +24,11 @@ func main() {
 		for _, p := range res {
 			fmt.Println(p)
 		}
+	} else if strings.HasSuffix(f, ".md") {
+		create := docxgen.NewDocCreator()
+		content, _ := os.ReadFile(f)
+		create.FromMarkdown(string(content)).ExportDocx("out.docx")
+		fmt.Println("docx文件已生成:", "out.docx")
 	}
 
 }
