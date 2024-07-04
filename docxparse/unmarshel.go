@@ -311,7 +311,7 @@ func (tc *Tc) UnmarshalToken(tok *xmltokenizer.Tokenizer, se *xmltokenizer.Token
 			se := xmltokenizer.GetToken().Copy(token)
 			err = p.UnmarshalToken(tok, se)
 			xmltokenizer.PutToken(se) // Put back to sync.Pool.
-			if err == nil {
+			if err != nil {
 				fmt.Println("p err", err)
 				return err
 			}

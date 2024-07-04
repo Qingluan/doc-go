@@ -88,9 +88,12 @@ func (p *P) GetFont() *RFonts {
 
 func (p *P) Text() string {
 	paras := ""
-	if p.Ppr.Spacing != nil {
-		paras += "\n"
+	if p.Ppr != nil {
+		if p.Ppr.Spacing != nil {
+			paras += "\n"
+		}
 	}
+
 	if p.IsTitle() {
 		paras += "# "
 	} else if p.IsH1() {
@@ -155,5 +158,10 @@ type Tc struct {
 }
 
 func (tc *Tc) String() string {
-	return tc.P.Text()
+	if tc.P != nil {
+		return tc.P.Text()
+	} else {
+		return ""
+	}
+
 }
