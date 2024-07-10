@@ -48,6 +48,9 @@ func ReadDoc(file string) []string {
 		if len(SUMMARY_ATTRIBS) <= int(ix) {
 			continue
 		}
+		if int(ix-1) >= len(SUMMARY_ATTRIBS) {
+			continue
+		}
 		name := SUMMARY_ATTRIBS[ix-1]
 		edata[name] = v
 		// fmt.Println(ix, name, v)
