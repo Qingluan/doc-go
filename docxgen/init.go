@@ -119,7 +119,7 @@ func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
 		os.Remove(docxfilepath)
 	}
 	tmpDir := os.TempDir()
-	base := time.Now().String()
+	base := time.Now().Format("20060102150405")
 	baseDir := filepath.Join(tmpDir, base)
 	os.Mkdir(baseDir, os.ModePerm)
 
