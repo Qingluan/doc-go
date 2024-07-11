@@ -188,10 +188,9 @@ func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
 
 		return err
 	}
-	defer zipFile.Close()
 	// 创建zip.Writer
 	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
+
 	// 将文件写入zip文件
 	files := []string{
 		documentXml,
@@ -216,22 +215,34 @@ func (dc *DocxCreator) ExportDocx(docxfilepath string) error {
 
 		f, err := os.Open(file)
 		if err != nil {
+			zipWriter.Close()
+			zipFile.Close()
+
 			return err
 		}
-		defer f.Close()
 		// 创建zip文件中的文件
 		zname := strings.ReplaceAll(file, baseDir, "")
 		zname = strings.TrimPrefix(zname, "/")
 		w, err := zipWriter.Create(zname)
 		if err != nil {
+			zipWriter.Close()
+			zipFile.Close()
+
 			return err
 		}
 		// 将文件内容写入zip文件
 		_, err = io.Copy(w, f)
 		if err != nil {
+			zipWriter.Close()
+			zipFile.Close()
+
 			return err
 		}
+		f.Close()
 	}
+	zipWriter.Close()
+	zipFile.Close()
+
 	os.Rename(docxfilepathZip, docxfilepath)
 
 	return nil
